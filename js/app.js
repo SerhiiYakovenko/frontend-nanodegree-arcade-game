@@ -1,46 +1,107 @@
-// Enemies our player must avoid
-var Enemy = function() {
-    // Variables applied to each of our instances go here,
-    // we've provided one for you to get started
+const cellWidth = 100;
+const cellHeight = 80;
+const fieldWidth = 5 * cellWidth;
+const rows = 3;
+const enemyWidth = 80;
+const startPositionX = 200;
+const startPositionY = 380;
 
-    // The image/sprite for our enemies, this uses
-    // a helper we've provided to easily load images
-    this.sprite = 'images/enemy-bug.png';
+var Enemy = function (y, player) {
+  this.x = 0;
+  this.y = y;
+  this.player = player;
+  this.setRandomSpeed();
+  this.sprite = "images/enemy-bug.png";
 };
 
-// Update the enemy's position, required method for game
-// Parameter: dt, a time delta between ticks
-Enemy.prototype.update = function(dt) {
-    // You should multiply any movement by the dt parameter
-    // which will ensure the game runs at the same speed for
-    // all computers.
+Enemy.prototype.update = function (dt) {
+  this.x += this.speed * dt;
+  if (this.checkCollision()) alert("Better luck next time, bevare of bugs");
 };
 
-// Draw the enemy on the screen, required method for game
-Enemy.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+Enemy.prototype.setRandomSpeed = function () {
+  this.speed = randomSpeed(50, 250);
 };
 
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
+Enemy.prototype.checkCollision = function () {
+  if (
+    this.x >= this.player.x - cellWidth &&
+    this.x <= this.player.x + cellWidth &&
+    this.player.y === this.y
+  ) {
+    this.player.moveToStart();
+    return true;
+  } else {
+    return false;
+  }
+};
 
+Enemy.prototype.render = function () {
+  if (this.x > fieldWidth) {
+    this.x = 0;
+  }
+  ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
 
-// Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-// Place the player object in a variable called player
+const Player = function () {
+  this.moveToStart();
+  this.sprite = "images/char-boy.png";
+};
 
+Player.prototype.update = function () {
+    if(this.x < 0) this.x = 0;
+    if(this.x >= fieldWidth) this.x = fieldWidth-cellWidth;
+    if(this.y >= startPositionY) this.y = startPositionY;
+};
 
+Player.prototype.render = function () {
+  ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
 
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
-document.addEventListener('keyup', function(e) {
-    var allowedKeys = {
-        37: 'left',
-        38: 'up',
-        39: 'right',
-        40: 'down'
-    };
+Player.prototype.moveToStart = function () {
+  this.x = startPositionX;
+  this.y = startPositionY;
+};
 
-    player.handleInput(allowedKeys[e.keyCode]);
+Player.prototype.handleInput = function (keyCode) {
+  switch (keyCode) {
+    case "up":
+      this.y -= cellHeight;
+      if (this.y < 0) {
+        alert("Easy peasy lemon squeezy");
+        this.moveToStart();
+      }
+      break;
+    case "down":
+      this.y += cellHeight;
+      break;
+    case "left":
+      this.x -= cellWidth;
+      break;
+    case "right":
+      this.x += cellWidth;
+      break;
+  }
+};
+
+let player = new Player();
+let allEnemies = [];
+for (var i = 1; i <= rows; i++) {
+  allEnemies.push(new Enemy(i * cellHeight - 20, player));
+}
+
+document.addEventListener("keyup", function (e) {
+  var allowedKeys = {
+    37: "left",
+    38: "up",
+    39: "right",
+    40: "down",
+  };
+
+  player.handleInput(allowedKeys[e.keyCode]);
 });
+
+function randomSpeed(min, max) {
+  let rand = min - 0.5 + Math.random() * (max - min + 1);
+  return Math.round(rand);
+}
